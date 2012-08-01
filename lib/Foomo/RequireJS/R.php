@@ -20,68 +20,77 @@
 namespace Foomo\RequireJS;
  
 /**
+ * An alternative to r.js ;)
+ * 
  * @link www.foomo.org
  * @license www.gnu.org/licenses/lgpl.txt
  * @author Jan Halfar jan@bestbytes.com
  */
 class R
 {
-	public static function build($module, $mainJS)
-	{
-		//$cliCall = \Foomo\CliCall::create();
-		// @see http://requirejs.org/docs/optimization.html#wholeproject
-		/*
-		({
-			appDir: "../",
-			baseUrl: "scripts",
-			dir: "../../appdirectory-build",
-			modules: [
-				{
-					name: "main"
-				}
-			]
-		})
-		*/
-		$buildConfig = array(
-			'appDir' => \Foomo\Config::getModuleDir($module),
-			'baseUrl' =>  \Foomo\ROOT_HTTP  . '/modules/' . $module . '/' . dirname($mainJS),
-			'dir' => '',
-			'modules' => array(
-				array('name' => 'main')
-			)
-		);
-		echo '(' . json_encode($buildConfig) . ')';
-	}
-	public static function concatJS($dir)
+	//---------------------------------------------------------------------------------------------
+	// ~ public API
+	//---------------------------------------------------------------------------------------------
+	/**
+	 * concatenate a lot of javascript
+	 * 
+	 * @param string $dir directory to llok for .js files with a string define()
+	 * 
+	 * @return string (lot of) javascript
+	 */
+	public static function concatDefiningJSFiles($dir)
 	{
 		$js = '// concatenated by ' . __METHOD__ . ' ' . date('Y-m-d H:i:s', time());
 		$jsFiles = array();
-		self::crawlToConcatJS($dir, $jsFiles);
+		self::collectDefiningJSFiles($dir, $jsFiles);
 		foreach($jsFiles as $jsFile) {
 			$jsFromFile = file_get_contents($jsFile);
 			$js .= PHP_EOL . '// ' . basename($jsFile) . PHP_EOL . PHP_EOL . $jsFromFile;
 		}
 		return $js;
 	}
-	public static function getJSFiles($dir)
+	/**
+	 * get .js files that do a RequireJS define()
+	 * 
+	 * @param string $dir directory to recursively to scan in
+	 * 
+	 * @return string[] array of files
+	 */
+	public static function getDefiningJSFiles($dir)
 	{
 		$jsFiles = array();
-		self::crawlToConcatJS($dir, $jsFiles);
+		self::collectDefiningJSFiles($dir, $jsFiles);
 		return $jsFiles;
 	}
-	public static function getLastmod($dir)
+	/**
+	 * 
+	 * 
+	 * @param string $dir
+	 * 
+	 * @return integer timestamp of last change
+	 */
+	public static function getLastmodForDefiningJSFiles($dir)
 	{
 		$jsFiles = array();
-		self::crawlToConcatJS($dir, $jsFiles);
+		self::collectDefiningJSFiles($dir, $jsFiles);
 		$lastmod = 0;
 		foreach($jsFiles as $jsFile) {
 			$mtime = filemtime($jsFile);
 			$lastmod = ($lastmod < $mtime)?$mtime:$lastmod;
 		}
 		return $lastmod;
-		
 	}
-	private static function crawlToConcatJS($dir, array &$jsFiles)
+	//---------------------------------------------------------------------------------------------
+	// ~ private
+	//---------------------------------------------------------------------------------------------
+	/**
+	 * collect defining js files
+	 * 
+	 * @param type $dir
+	 * 
+	 * @param array $jsFiles
+	 */
+	private static function collectDefiningJSFiles($dir, array &$jsFiles)
 	{
 		$dirIterator = new \DirectoryIterator($dir);
 		foreach($dirIterator as $fileInfo) {
@@ -93,12 +102,12 @@ class R
 			if($fileInfo->isFile() && substr($fileInfo->getFilename(), -3) === '.js') {
 				// append js
 				$jsFromFile = file_get_contents($fileInfo->getPathname());
-				if(strpos($jsFromFile, 'define(') === 0) {
+				if(strpos($jsFromFile, 'define(') !== false) {
 					$jsFiles[] = $fileInfo->getPathname();
 				}
 			} else if($fileInfo->isDir()) {
 				// crawl deeper
-				self::crawlToConcatJS($fileInfo->getPathname(), $jsFiles);
+				self::collectDefiningJSFiles($fileInfo->getPathname(), $jsFiles);
 			}
 		}
 	}

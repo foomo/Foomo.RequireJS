@@ -32,7 +32,7 @@ class RTest extends \PHPUnit_Framework_TestCase
 	}
 	public function testConcat()
 	{
-		echo R::concatJS(\Battleground\Module::getHtdocsDir('js'));
+		echo R::concatDefiningJSFiles(\Battleground\Module::getHtdocsDir('js'));
 	}
 
 }

@@ -1,0 +1,2 @@
+<geshi type="php" file="<?= $model->getRelativeFile('example.php') ?>">
+</geshi>
