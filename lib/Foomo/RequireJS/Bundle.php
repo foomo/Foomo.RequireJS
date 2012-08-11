@@ -19,10 +19,6 @@
 
 namespace Foomo\RequireJS;
 
-use Foomo\Cache\Proxy;
-use Foomo\Cache\Manager;
-use Foomo\Cache\Invalidator;
- 
 /**
  * a bundle of js files and RequireJS modules
  * 
@@ -33,6 +29,7 @@ use Foomo\Cache\Invalidator;
 class Bundle
 {
 	private $scripts = array();
+	private $scriptsVar = array();
 	private $dirs = array();
 	/**
 	 * @var boolean
@@ -82,6 +79,18 @@ class Bundle
 		return $ret;
 	}
 	/**
+	 * add var scripts
+	 * 
+	 * @param string $module
+	 * @param string[] $scripts relative paths - keep the right order!
+	 * 
+	 * @return Foomo\RequireJS\Bundle
+	 */
+	public function addVarScripts($module, array $scripts) 
+	{
+		return $this->addScriptsToTargetArray($this->scriptsVar, $module, $scripts);
+	}
+	/**
 	 * add scripts
 	 * 
 	 * @param string $module
@@ -91,10 +100,23 @@ class Bundle
 	 */
 	public function addScripts($module, array $scripts)
 	{
-		if(!isset($this->scripts[$module])) {
-			$this->scripts[$module] = array();
+		return $this->addScriptsToTargetArray($this->scripts, $module, $scripts);
+	}
+	/**
+	 * dry helper method
+	 * 
+	 * @param array $targetArray
+	 * @param string $module
+	 * @param string[] $scripts
+	 * 
+	 * @return \Foomo\RequireJS\Bundle
+	 */
+	private function addScriptsToTargetArray(array &$targetArray, $module, $scripts)
+	{
+		if(!isset($targetArray[$module])) {
+			$targetArray[$module] = array();
 		}
-		$this->scripts[$module] = array_merge($this->scripts[$module], $scripts);
+		$targetArray[$module] = array_merge($targetArray[$module], $scripts);
 		return $this;
 	}
 	/**
@@ -166,14 +188,18 @@ class Bundle
 		
 		if($this->debug) {
 			$scripts = array();
-			foreach ($this->scripts as $module => $moduleScripts) {
-				foreach($moduleScripts as $moduleScript) {
-					$scripts[] = self::getRootHttp($module) . '/' . $moduleScript;
+			foreach(array('scripts', 'scriptsVar') as $prop) {
+				foreach ($this->$prop as $module => $moduleScripts) {
+					foreach($moduleScripts as $moduleScript) {
+						$scripts[] = self::getRootHttp($module, $prop == 'scriptsVar') . '/' . $moduleScript;
+					}
 				}
 			}
+			$templateDefs = '';
 			foreach($this->dirs as $module => $dirs) {
 				$htdocsDir = self::getHtdocsdDir($module);
 				foreach($dirs as $dir) {
+					$templateDefs .= R::concatHTMLTemplateFiles($dir);
 					$jsFiles = R::getDefiningJSFiles($htdocsDir . DIRECTORY_SEPARATOR . $dir);
 					foreach($jsFiles as $jsFile) {
 						$relativePath = implode('/', explode(DIRECTORY_SEPARATOR, substr($jsFile, strlen($htdocsDir) + 1)));
@@ -184,6 +210,7 @@ class Bundle
 			if(count($scripts) > 0) {
 				$doc->addJavascripts($scripts);			
 			}
+			$doc->addJavascript($templateDefs);
 		} else {
 			$this->check($this->watch, $this->uglify);
 			$doc->addJavascripts(array($this->getEndpoint()));
@@ -243,46 +270,57 @@ class Bundle
 	private function getJS($uglify = false)
 	{
 		$js = '// app bundle in module ' . $this->module . ' ' . $this->name . PHP_EOL;
-		foreach($this->scripts as $module => $jsPaths) {
-			$js .= PHP_EOL . '// scripts from module ' . $module . PHP_EOL . PHP_EOL;
-			$htdocsDir = self::getHtdocsdDir($module);
-			foreach($jsPaths as $jsPath) {
-				$js .= PHP_EOL . '// ' . $jsPath . PHP_EOL . PHP_EOL;
-				$jsFile = $htdocsDir . DIRECTORY_SEPARATOR . $jsPath;
-				$js .= file_get_contents($jsFile);
+		foreach(array('scripts', 'scriptsVar') as $prop) {
+			foreach($this->$prop as $module => $jsPaths) {
+				$js .= PHP_EOL . '// ' . $prop . ' from module ' . $module . PHP_EOL . PHP_EOL;
+				$htdocsDir = self::getHtdocsdDir($module, $prop == 'scriptsVar');
+				foreach($jsPaths as $jsPath) {
+					$js .= PHP_EOL . '// ' . $jsPath . PHP_EOL . PHP_EOL;
+					$jsFile = $htdocsDir . DIRECTORY_SEPARATOR . $jsPath;
+					$js .= file_get_contents($jsFile);
+				}
 			}
-
 		}
 		foreach($this->dirs as $module => $dirs) {
 			foreach($dirs as $dir) {
 				$js .= R::concatDefiningJSFiles(self::getHtdocsdDir($module) . DIRECTORY_SEPARATOR . $dir);
+				$js .= PHP_EOL . '// templates in: ' . basename($dir) . PHP_EOL . R::concatHTMLTemplateFiles($dir) . PHP_EOL;
 			}
 		}
 		return $this->compile($js, $uglify);
 	}
+	private function higher($a, $b)
+	{
+		return ($a > $b)?$a:$b;
+	}
 	private function getLastmod()
 	{
 		$lastmod = 0;
-		foreach($this->scripts as $module => $jsPaths) {
-			$htdocsDir = self::getHtdocsdDir($module);
-			foreach($jsPaths as $jsPath) {
-				$jsFile = $htdocsDir . DIRECTORY_SEPARATOR . $jsPath;
-				$lastmod = $this->lastMod($lastmod, $jsFile);
-			}
+		foreach(array('scripts', 'scriptsVar') as $prop) {
+			foreach($this->$prop as $module => $jsPaths) {
+				$htdocsDir = self::getHtdocsdDir($module, $prop == 'scriptsVar');
+				foreach($jsPaths as $jsPath) {
+					$jsFile = $htdocsDir . DIRECTORY_SEPARATOR . $jsPath;
+					$lastmod = $this->lastMod($lastmod, $jsFile);
+				}
 
+			}
 		}
 		foreach($this->dirs as $module => $dirs) {
 			foreach($dirs as $dir) {
-				$dirMtime = R::getLastmodForDefiningJSFiles(self::getHtdocsdDir($module) . DIRECTORY_SEPARATOR . $dir);
-				$lastmod = ($dirMtime > $lastmod)?$dirMtime:$lastmod;
+				$fullDir = self::getHtdocsdDir($module) . DIRECTORY_SEPARATOR . $dir;
+				$lastmod = max(array(
+					$lastmod,
+					R::getLastmodForDefiningJSFiles($fullDir),
+					R::getLastmodForHTMLTemplateFiles($fullDir)
+				));
 			}
 		}
 		return $lastmod;
 	}
 	private function lastMod($lastmod, $filename)
 	{
-		$mtime = filemtime($filename);
-		return ($mtime > $lastmod)?$mtime:$lastmod;
+		return $this->higher($lastmod, filemtime($filename));
 	}
 	private function compile($js, $uglify)
 	{
@@ -302,12 +340,16 @@ class Bundle
 		unlink($compiledFilename);
 		return $compiled;
 	}
-	private static function getRootHttp($module)
+	private static function getRootHttp($module, $var = false)
 	{
-		return \Foomo\ROOT_HTTP . '/modules/' . $module;
+		return \Foomo\ROOT_HTTP . '/modules' . ($var?'Var':'') . '/' . $module;
 	}
-	private static function getHtdocsdDir($module)
+	private static function getHtdocsdDir($module, $var = false)
 	{
-		return \Foomo\Config::getModuleDir($module) . DIRECTORY_SEPARATOR . 'htdocs';
+		if($var) {
+			return \Foomo\Config::getVarDir() . DIRECTORY_SEPARATOR . 'htdocs'  . DIRECTORY_SEPARATOR . 'modulesVar' . DIRECTORY_SEPARATOR . $module;
+		} else {
+			return \Foomo\Config::getModuleDir($module) . DIRECTORY_SEPARATOR . 'htdocs';
+		}
 	}
 }

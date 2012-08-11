@@ -62,6 +62,29 @@ class R
 		self::collectDefiningJSFiles($dir, $jsFiles);
 		return $jsFiles;
 	}
+	public static function concatHTMLTemplateFiles($dir)
+	{
+		$htmlFiles = array();
+		self::collectHTMLTemplateFiles($dir, $htmlFiles);
+		$ret = '';
+		foreach($htmlFiles as $htmlFile) {
+			$namespace = implode('/', explode(DIRECTORY_SEPARATOR, substr($htmlFile, strlen($dir) + 1, -5)));
+			$ret .= 'define("'.$namespace.'", [], function() { return ' . json_encode(file_get_contents($htmlFile)) . '; } );' . PHP_EOL;
+		}
+		return $ret;
+	}
+	
+	public static function getLastmodForHTMLTemplateFiles($dir)
+	{
+		$jsFiles = array();
+		self::collectDefiningJSFiles($dir, $jsFiles);
+		$lastmod = 0;
+		foreach($jsFiles as $jsFile) {
+			$filemod = filectime($jsFile);
+			$lastmod = ($filemod > $lastmod)?$filemod:$lastmod;
+		}
+		return $lastmod;
+	}
 	/**
 	 * 
 	 * 
@@ -110,5 +133,30 @@ class R
 				self::collectDefiningJSFiles($fileInfo->getPathname(), $jsFiles);
 			}
 		}
+	}
+	/**
+	 * collect html files in a directory
+	 * 
+	 * @param string $dir
+	 * 
+	 * @param array $htmlFiles
+	 */
+	private static function collectHTMLTemplateFiles($dir, array &$htmlFiles)
+	{
+		$dirIterator = new \DirectoryIterator($dir);
+		foreach($dirIterator as $fileInfo) {
+			/* @var $fileInfo \SplFileInfo */
+			if(substr($fileInfo->getFilename(), 0, 1) === '.') {
+				// skip dot files
+				continue;
+			}
+			if($fileInfo->isFile() && substr($fileInfo->getFilename(), -5) === '.html') {
+					$htmlFiles[] = $fileInfo->getPathname();
+			} else if($fileInfo->isDir()) {
+				// crawl deeper
+				self::collectHTMLTemplateFiles($fileInfo->getPathname(), $htmlFiles);
+			}
+		}
+		
 	}
 }
