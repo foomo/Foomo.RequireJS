@@ -320,7 +320,11 @@ class Bundle
 	}
 	private function lastMod($lastmod, $filename)
 	{
-		return $this->higher($lastmod, filemtime($filename));
+		if(file_exists($filename)) {
+			return $this->higher($lastmod, filemtime($filename));
+		} else {
+			trigger_error('missing file in bundle', E_USER_ERROR);
+		}
 	}
 	private function compile($js, $uglify)
 	{
