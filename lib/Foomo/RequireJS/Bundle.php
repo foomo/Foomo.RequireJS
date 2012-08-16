@@ -284,7 +284,7 @@ class Bundle
 		foreach($this->dirs as $module => $dirs) {
 			foreach($dirs as $dir) {
 				$js .= R::concatDefiningJSFiles(self::getHtdocsdDir($module) . DIRECTORY_SEPARATOR . $dir);
-				$js .= PHP_EOL . '// templates in: ' . basename($dir) . PHP_EOL . R::concatHTMLTemplateFiles($dir) . PHP_EOL;
+				$js .= PHP_EOL . '// templates in: ' . basename($dir) . PHP_EOL . R::concatHTMLTemplateFiles(self::getHtdocsdDir($module) . DIRECTORY_SEPARATOR . $dir) . PHP_EOL;
 			}
 		}
 		return $this->compile($js, $uglify);
