@@ -2,17 +2,17 @@
 
 /*
  * This file is part of the foomo Opensource Framework.
- * 
+ *
  * The foomo Opensource Framework is free software: you can redistribute it
  * and/or modify it under the terms of the GNU Lesser General Public License as
  * published  by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The foomo Opensource Framework is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License along with
  * the foomo Opensource Framework. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -21,7 +21,7 @@ namespace Foomo\RequireJS;
 
 /**
  * a bundle of js files and RequireJS modules
- * 
+ *
  * @link www.foomo.org
  * @license www.gnu.org/licenses/lgpl.txt
  * @author Jan Halfar jan@bestbytes.com
@@ -45,29 +45,29 @@ class Bundle
 	private $debug = false;
 	/**
 	 * my module
-	 * 
+	 *
 	 * @var string
 	 */
 	private $module;
 	/**
 	 * bundle name
-	 * 
+	 *
 	 * @var string
 	 */
 	private $name;
 	/**
 	 * bundle version
-	 * 
+	 *
 	 * @var string
 	 */
 	private $version;
 	/**
 	 * create a bundle
-	 * 
+	 *
 	 * @param string $module
 	 * @param string $name name of the bindle
 	 * @param string $version update this, if you want a safe deployment
-	 * 
+	 *
 	 * @return Foomo\RequireJS\Bundle
 	 */
 	public function create($module, $name, $version)
@@ -80,22 +80,22 @@ class Bundle
 	}
 	/**
 	 * add var scripts
-	 * 
+	 *
 	 * @param string $module
 	 * @param string[] $scripts relative paths - keep the right order!
-	 * 
+	 *
 	 * @return Foomo\RequireJS\Bundle
 	 */
-	public function addVarScripts($module, array $scripts) 
+	public function addVarScripts($module, array $scripts)
 	{
 		return $this->addScriptsToTargetArray($this->scriptsVar, $module, $scripts);
 	}
 	/**
 	 * add scripts
-	 * 
+	 *
 	 * @param string $module
 	 * @param string[] $scripts relative paths - keep the right order!
-	 * 
+	 *
 	 * @return Foomo\RequireJS\Bundle
 	 */
 	public function addScripts($module, array $scripts)
@@ -104,11 +104,11 @@ class Bundle
 	}
 	/**
 	 * dry helper method
-	 * 
+	 *
 	 * @param array $targetArray
 	 * @param string $module
 	 * @param string[] $scripts
-	 * 
+	 *
 	 * @return \Foomo\RequireJS\Bundle
 	 */
 	private function addScriptsToTargetArray(array &$targetArray, $module, $scripts)
@@ -121,10 +121,10 @@ class Bundle
 	}
 	/**
 	 * add directories to scan for RequireJS module definiing .js files
-	 * 
+	 *
 	 * @param string $module
 	 * @param string[] $dirs directories to scan for js files in
-	 * 
+	 *
 	 * @return Foomo\RequireJS\Bundle
 	 */
 	public function addReqireJSDirs($module, array $dirs)
@@ -137,9 +137,9 @@ class Bundle
 	}
 	/**
 	 * turn on debugging
-	 * 
+	 *
 	 * @param boolean $debug
-	 * 
+	 *
 	 * @return Foomo\RequireJS\Bundle
 	 */
 	public function debug($debug = true)
@@ -149,9 +149,9 @@ class Bundle
 	}
 	/**
 	 * turn on uglifying
-	 * 
+	 *
 	 * @param boolean $uglify
-	 * 
+	 *
 	 * @return Foomo\RequireJS\Bundle
 	 */
 	public function uglify($uglify = true)
@@ -161,9 +161,9 @@ class Bundle
 	}
 	/**
 	 * turn on watching
-	 * 
+	 *
 	 * @param boolean $watch
-	 * 
+	 *
 	 * @return Foomo\RequireJS\Bundle
 	 */
 	public function watch($watch = true)
@@ -174,10 +174,10 @@ class Bundle
 
 	/**
 	 * link the bundle to a HTMLDocument
-	 * 
+	 *
 	 * @param boolean $debug add every external js file or load the bundle as a minified js file
 	 * @param Foomo\HTMLDocument $doc
-	 * 
+	 *
 	 * @return Foomo\RequireJS\Bundle
 	 */
 	public function linkToDoc(\Foomo\HTMLDocument $doc = null)
@@ -185,7 +185,7 @@ class Bundle
 		if(is_null($doc)) {
 			$doc = \Foomo\HTMLDocument::getInstance();
 		}
-		
+
 		if($this->debug) {
 			$scripts = array();
 			foreach(array('scripts', 'scriptsVar') as $prop) {
@@ -199,7 +199,7 @@ class Bundle
 			foreach($this->dirs as $module => $dirs) {
 				$htdocsDir = self::getHtdocsdDir($module);
 				foreach($dirs as $dir) {
-					$templateDefs .= R::concatHTMLTemplateFiles($dir);
+					$templateDefs .= R::concatHTMLTemplateFiles($htdocsDir . DIRECTORY_SEPARATOR . $dir);
 					$jsFiles = R::getDefiningJSFiles($htdocsDir . DIRECTORY_SEPARATOR . $dir);
 					foreach($jsFiles as $jsFile) {
 						$relativePath = implode('/', explode(DIRECTORY_SEPARATOR, substr($jsFile, strlen($htdocsDir) + 1)));
@@ -208,7 +208,7 @@ class Bundle
 				}
 			}
 			if(count($scripts) > 0) {
-				$doc->addJavascripts($scripts);			
+				$doc->addJavascripts($scripts);
 			}
 			$doc->addJavascript($templateDefs);
 		} else {
@@ -228,7 +228,7 @@ class Bundle
 
 	/**
 	 * serve the bundle - use this in the endpoint
-	 * 
+	 *
 	 * @param boolean $watch watch for changes in the bundle
 	 * @param boolean $uglify uglify the javascript - uglifyjs needs to be available on the command line to the server
 	 */
@@ -249,7 +249,7 @@ class Bundle
 				$lastmod = 0;
 			}
 			if(!$compiledExists || $lastmod > $lastModUglified) {
-				$this->sayIAmWorkingOnIt($compiledFilename);				
+				$this->sayIAmWorkingOnIt($compiledFilename);
 				file_put_contents($compiledFilename, $this->getJS($uglify));
 			}
 		}
@@ -259,12 +259,12 @@ class Bundle
 		file_put_contents($compiledFilename, '// hang on - i am working on it ' . date('Y-m-d H:i:s'));
 	}
 	/**
-	 * 
+	 *
 	 * @param string $module
 	 * @param array $scripts
 	 * @param array $dirs
 	 * @param boolean $uglify
-	 * 
+	 *
 	 * @return string
 	 */
 	private function getJS($uglify = false)
@@ -284,7 +284,7 @@ class Bundle
 		foreach($this->dirs as $module => $dirs) {
 			foreach($dirs as $dir) {
 				$js .= R::concatDefiningJSFiles(self::getHtdocsdDir($module) . DIRECTORY_SEPARATOR . $dir);
-				$js .= PHP_EOL . '// templates in: ' . basename($dir) . PHP_EOL . R::concatHTMLTemplateFiles($dir) . PHP_EOL;
+				$js .= PHP_EOL . '// templates in: ' . basename($dir) . PHP_EOL . R::concatHTMLTemplateFiles(self::getHtdocsdDir($module) . DIRECTORY_SEPARATOR . $dir) . PHP_EOL;
 			}
 		}
 		return $this->compile($js, $uglify);
