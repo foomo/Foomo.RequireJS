@@ -223,7 +223,11 @@ class Bundle
 	}
 	private function getCompiledFilename()
 	{
-		return Module::getHtdocsVarDir() . DIRECTORY_SEPARATOR . $this->module . '-' . $this->name . '-' . $this->version . '.minified.js';
+		return 
+			Module::getHtdocsVarDir() . DIRECTORY_SEPARATOR . 
+			$this->module . '-' . $this->name . '-' . $this->version . 
+			($this->uglify?'.minified':'') . '.js'
+		;
 	}
 
 	/**
