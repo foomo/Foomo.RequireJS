@@ -129,6 +129,19 @@ class Bundle
 	 */
 	public function addReqireJSDirs($module, array $dirs)
 	{
+		trigger_error(__METHOD__ . ' is deprecated, it was a typo use addRequireJSDirs instead', E_USER_DEPRECATED);
+		return $this->addRequireJSDirs($module, $dirs);
+	}
+	/**
+	 * add directories to scan for RequireJS module definiing .js files
+	 *
+	 * @param string $module
+	 * @param string[] $dirs directories to scan for js files in
+	 *
+	 * @return Foomo\RequireJS\Bundle
+	 */
+	public function addRequireJSDirs($module, array $dirs)
+	{
 		if(!isset($this->dirs[$module])) {
 			$this->dirs[$module] = array();
 		}

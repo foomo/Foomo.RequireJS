@@ -22,7 +22,7 @@ $bundle = Foomo\RequireJS\Bundle::create(
 	// add RequireJS modules in a directory
 	// this will be scanned recursively
 	// RequireJS is not bundled - add it yourself with addScripts()
-	->addReqireJSDirs(My\Module::NAME, array('js/app'))
+	->addRequireJSDirs(My\Module::NAME, array('js/app'))
 	// every single js file is linked to the html document 
 	// - this is how you want at dev time
 	->debug()
