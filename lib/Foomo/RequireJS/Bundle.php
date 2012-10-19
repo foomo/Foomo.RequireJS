@@ -68,7 +68,7 @@ class Bundle
 	 * @param string $name name of the bindle
 	 * @param string $version update this, if you want a safe deployment
 	 *
-	 * @return Foomo\RequireJS\Bundle
+	 * @return Bundle
 	 */
 	public function create($module, $name, $version)
 	{
@@ -84,7 +84,7 @@ class Bundle
 	 * @param string $module
 	 * @param string[] $scripts relative paths - keep the right order!
 	 *
-	 * @return Foomo\RequireJS\Bundle
+	 * @return Bundle
 	 */
 	public function addVarScripts($module, array $scripts)
 	{
@@ -96,7 +96,7 @@ class Bundle
 	 * @param string $module
 	 * @param string[] $scripts relative paths - keep the right order!
 	 *
-	 * @return Foomo\RequireJS\Bundle
+	 * @return Bundle
 	 */
 	public function addScripts($module, array $scripts)
 	{
@@ -109,7 +109,7 @@ class Bundle
 	 * @param string $module
 	 * @param string[] $scripts
 	 *
-	 * @return \Foomo\RequireJS\Bundle
+	 * @return \Bundle
 	 */
 	private function addScriptsToTargetArray(array &$targetArray, $module, $scripts)
 	{
@@ -125,7 +125,7 @@ class Bundle
 	 * @param string $module
 	 * @param string[] $dirs directories to scan for js files in
 	 *
-	 * @return Foomo\RequireJS\Bundle
+	 * @return Bundle
 	 */
 	public function addReqireJSDirs($module, array $dirs)
 	{
@@ -138,7 +138,7 @@ class Bundle
 	 * @param string $module
 	 * @param string[] $dirs directories to scan for js files in
 	 *
-	 * @return Foomo\RequireJS\Bundle
+	 * @return Bundle
 	 */
 	public function addRequireJSDirs($module, array $dirs)
 	{
@@ -153,7 +153,7 @@ class Bundle
 	 *
 	 * @param boolean $debug
 	 *
-	 * @return Foomo\RequireJS\Bundle
+	 * @return Bundle
 	 */
 	public function debug($debug = true)
 	{
@@ -165,7 +165,7 @@ class Bundle
 	 *
 	 * @param boolean $uglify
 	 *
-	 * @return Foomo\RequireJS\Bundle
+	 * @return Bundle
 	 */
 	public function uglify($uglify = true)
 	{
@@ -177,7 +177,7 @@ class Bundle
 	 *
 	 * @param boolean $watch
 	 *
-	 * @return Foomo\RequireJS\Bundle
+	 * @return Bundle
 	 */
 	public function watch($watch = true)
 	{
@@ -191,7 +191,7 @@ class Bundle
 	 * @param boolean $debug add every external js file or load the bundle as a minified js file
 	 * @param Foomo\HTMLDocument $doc
 	 *
-	 * @return Foomo\RequireJS\Bundle
+	 * @return Bundle
 	 */
 	public function linkToDoc(\Foomo\HTMLDocument $doc = null)
 	{
