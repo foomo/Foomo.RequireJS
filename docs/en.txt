@@ -1,3 +1,2 @@
 + Abstract
-+ Installation
 + Cookbook

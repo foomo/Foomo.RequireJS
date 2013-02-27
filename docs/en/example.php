@@ -30,9 +30,9 @@ $bundle = Foomo\RequireJS\Bundle::create(
 	// check if there was any changes in your js
 	// use this if you want to debug the concatenated js
 	->watch()
-	// enabled by default
+	// enabled by default, but not active in debug mode
 	// disable for debugging purposes
-	->uglify()
+	->compress()
 ;
 
 // use it

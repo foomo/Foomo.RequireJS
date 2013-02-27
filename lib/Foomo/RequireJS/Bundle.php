@@ -26,15 +26,18 @@ namespace Foomo\RequireJS;
  * @license www.gnu.org/licenses/lgpl.txt
  * @author Jan Halfar jan@bestbytes.com
  */
+use Foomo\JS;
+
 class Bundle
 {
 	private $scripts = array();
+	private $foomoScripts = array();
 	private $scriptsVar = array();
 	private $dirs = array();
 	/**
 	 * @var boolean
 	 */
-	private $uglify = true;
+	private $compress = true;
 	/**
 	 * @var boolean
 	 */
@@ -90,6 +93,25 @@ class Bundle
 	{
 		return $this->addScriptsToTargetArray($this->scriptsVar, $module, $scripts);
 	}
+
+	/**
+	 * add a Foomo.JS style script, which supports js includes
+	 *
+	 * @param string $module
+	 * @param string $script
+	 *
+	 * @return $this
+	 */
+	public function addFoomoJSScripts($module, $scripts)
+	{
+		if(!is_array($this->foomoScripts[$module])) {
+			$this->foomoScripts[$module] = array();
+		}
+		foreach($scripts as $script) {
+			$this->foomoScripts[$module][] = $script;
+		}
+		return $this;
+	}
 	/**
 	 * add scripts
 	 *
@@ -127,19 +149,6 @@ class Bundle
 	 *
 	 * @return Bundle
 	 */
-	public function addReqireJSDirs($module, array $dirs)
-	{
-		trigger_error(__METHOD__ . ' is deprecated, it was a typo use addRequireJSDirs instead', E_USER_DEPRECATED);
-		return $this->addRequireJSDirs($module, $dirs);
-	}
-	/**
-	 * add directories to scan for RequireJS module definiing .js files
-	 *
-	 * @param string $module
-	 * @param string[] $dirs directories to scan for js files in
-	 *
-	 * @return Bundle
-	 */
 	public function addRequireJSDirs($module, array $dirs)
 	{
 		if(!isset($this->dirs[$module])) {
@@ -163,13 +172,13 @@ class Bundle
 	/**
 	 * turn on uglifying
 	 *
-	 * @param boolean $uglify
+	 * @param boolean $compress
 	 *
 	 * @return Bundle
 	 */
-	public function uglify($uglify = true)
+	public function compress($compress = true)
 	{
-		$this->uglify = $uglify;
+		$this->compress = $compress;
 		return $this;
 	}
 	/**
@@ -188,8 +197,7 @@ class Bundle
 	/**
 	 * link the bundle to a HTMLDocument
 	 *
-	 * @param boolean $debug add every external js file or load the bundle as a minified js file
-	 * @param Foomo\HTMLDocument $doc
+	 * @param \Foomo\HTMLDocument $doc
 	 *
 	 * @return Bundle
 	 */
@@ -198,9 +206,20 @@ class Bundle
 		if(is_null($doc)) {
 			$doc = \Foomo\HTMLDocument::getInstance();
 		}
-
 		if($this->debug) {
 			$scripts = array();
+			foreach($this->foomoScripts as $module => $scripts) {
+				foreach($scripts as $script) {
+					$scripts[] = JS::create(
+							\Foomo\Config::getHtdocsDir($module) . DIRECTORY_SEPARATOR . $script
+						)
+						->watch(true)
+						->compress(false)
+						->compile()
+						->getOutputPath()
+					;
+				}
+			}
 			foreach(array('scripts', 'scriptsVar') as $prop) {
 				foreach ($this->$prop as $module => $moduleScripts) {
 					foreach($moduleScripts as $moduleScript) {
@@ -225,7 +244,7 @@ class Bundle
 			}
 			$doc->addJavascript($templateDefs);
 		} else {
-			$this->check($this->watch, $this->uglify);
+			$this->check($this->watch, $this->compress);
 			$doc->addJavascripts(array($this->getEndpoint()));
 		}
 		return $this;
@@ -239,7 +258,7 @@ class Bundle
 		return 
 			Module::getHtdocsVarDir() . DIRECTORY_SEPARATOR . 
 			$this->module . '-' . $this->name . '-' . $this->version . 
-			($this->uglify?'.minified':'') . '.js'
+			($this->compress?'.minified':'') . '.js'
 		;
 	}
 
@@ -247,9 +266,9 @@ class Bundle
 	 * serve the bundle - use this in the endpoint
 	 *
 	 * @param boolean $watch watch for changes in the bundle
-	 * @param boolean $uglify uglify the javascript - uglifyjs needs to be available on the command line to the server
+	 * @param boolean $compress compress the javascript - uglifyjs needs to be available on the command line to the server
 	 */
-	public function check($watch, $uglify)
+	private function check($watch, $compress)
 	{
 		$lastModUglified = 0;
 		$compiledFilename = $this->getCompiledFilename();
@@ -267,7 +286,7 @@ class Bundle
 			}
 			if(!$compiledExists || $lastmod > $lastModUglified) {
 				$this->sayIAmWorkingOnIt($compiledFilename);
-				file_put_contents($compiledFilename, $this->getJS($uglify));
+				file_put_contents($compiledFilename, $this->getJS($compress));
 			}
 		}
 	}
@@ -277,16 +296,26 @@ class Bundle
 	}
 	/**
 	 *
-	 * @param string $module
-	 * @param array $scripts
-	 * @param array $dirs
-	 * @param boolean $uglify
+	 * @param boolean $compress
 	 *
 	 * @return string
 	 */
-	private function getJS($uglify = false)
+	private function getJS($compress = false)
 	{
 		$js = '// app bundle in module ' . $this->module . ' ' . $this->name . PHP_EOL;
+		foreach($this->foomoScripts as $module => $scripts) {
+			foreach($scripts as $script) {
+				$js .= file_get_contents(
+					JS::create(
+						\Foomo\Config::getHtdocsDir($module) . DIRECTORY_SEPARATOR . $script
+					)
+						->watch(true)
+						->compress($compress)
+						->compile()
+						->getOutputFilename()
+				);
+			}
+		}
 		foreach(array('scripts', 'scriptsVar') as $prop) {
 			foreach($this->$prop as $module => $jsPaths) {
 				$js .= PHP_EOL . '// ' . $prop . ' from module ' . $module . PHP_EOL . PHP_EOL;
@@ -304,7 +333,7 @@ class Bundle
 				$js .= PHP_EOL . '// templates in: ' . basename($dir) . PHP_EOL . R::concatHTMLTemplateFiles(self::getHtdocsdDir($module) . DIRECTORY_SEPARATOR . $dir) . PHP_EOL;
 			}
 		}
-		return $this->compile($js, $uglify);
+		return $this->compile($js, $compress);
 	}
 	private function higher($a, $b)
 	{
@@ -343,22 +372,14 @@ class Bundle
 			trigger_error('missing file in bundle', E_USER_ERROR);
 		}
 	}
-	private function compile($js, $uglify)
+	private function compile($js, $compress)
 	{
-		$compiledFilename = tempnam(Module::getVarDir(), 'bundle-compile');
-		// uglify ...
-		file_put_contents($compiledFilename, '// uglified ' . date('Y-m-d H:i:s', time()) . PHP_EOL . PHP_EOL . $js);
-		if($uglify) {
-			$call = \Foomo\CliCall::create('uglifyjs', array($compiledFilename));
-			$call->execute();
-			if($call->exitStatus === 0) {
-				file_put_contents($compiledFilename, $call->stdOut);
-			} else {
-				trigger_error('uglify is ugly ' . $call->stdErr, E_USER_WARNING);
-			}
-		}
+		$bundledFilename = tempnam(Module::getVarDir(), 'bundle-compile');
+		file_put_contents($bundledFilename, '// bundled ' . date('Y-m-d H:i:s', time()) . PHP_EOL . PHP_EOL . $js);
+		$compiledFilename = JS::create($bundledFilename)->compress($compress)->compile()->getOutputFilename();
 		$compiled = file_get_contents($compiledFilename);
 		unlink($compiledFilename);
+		unlink($bundledFilename);
 		return $compiled;
 	}
 	private static function getRootHttp($module, $var = false)

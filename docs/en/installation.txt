@@ -1,5 +1,0 @@
-Install and activate Foomo.RequireJS
-
-<geshi type="bash">
-npm install --global uglify-js
-</geshi>

@@ -25,6 +25,7 @@ namespace Foomo\RequireJS;
  * @link www.foomo.org
  * @license www.gnu.org/licenses/lgpl.txt
  * @author Jan Halfar jan@bestbytes.com
+ * @internal
  */
 class R
 {
