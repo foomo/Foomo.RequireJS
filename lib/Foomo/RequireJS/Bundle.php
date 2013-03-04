@@ -104,7 +104,7 @@ class Bundle
 	 */
 	public function addFoomoJSScripts($module, $scripts)
 	{
-		if(!is_array($this->foomoScripts[$module])) {
+		if(!isset($this->foomoScripts[$module])) {
 			$this->foomoScripts[$module] = array();
 		}
 		foreach($scripts as $script) {
