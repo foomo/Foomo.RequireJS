@@ -208,8 +208,8 @@ class Bundle
 		}
 		if($this->debug) {
 			$scripts = array();
-			foreach($this->foomoScripts as $module => $scripts) {
-				foreach($scripts as $script) {
+			foreach($this->foomoScripts as $module => $foomoScripts) {
+				foreach($foomoScripts as $script) {
 					$scripts[] = JS::create(
 							\Foomo\Config::getHtdocsDir($module) . DIRECTORY_SEPARATOR . $script
 						)
