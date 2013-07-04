@@ -251,7 +251,7 @@ class Bundle
 	}
 	private function getEndpoint()
 	{
-		return Module::getHtdocsVarPath() . '/' . basename($this->getCompiledFilename());
+		return Module::getHtdocsVarBuildPath() . '/' . basename($this->getCompiledFilename());
 	}
 	private function getCompiledFilename()
 	{
