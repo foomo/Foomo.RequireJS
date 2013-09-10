@@ -73,7 +73,7 @@ class Bundle
 	 *
 	 * @return Bundle
 	 */
-	public function create($module, $name, $version)
+	public static function create($module, $name, $version)
 	{
 		$ret = new self;
 		$ret->name = $name;
